@@ -1,0 +1,159 @@
+<p id=console>solving...</p>
+
+<canvas id=canvas width=1500 height=1400>
+
+<script>
+let colors = ['yellow', 'orange', 'red', 'green'];
+let dist = {};
+
+function randomIntFromInterval(min, max) { // min and max included 
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function randState() {
+  let left = [3, 3, 3, 3];
+  let res = '';
+  let col;
+  for (let i = 0; i < 12; ++i) {
+    do {
+      col = randomIntFromInterval(0, 3);
+    } while (left[col] == 0);
+    left[col] -= 1;
+    res += col;
+  }
+  return res;
+}
+
+function drawStateCanvas(state, prev, x0, y0) {
+  let canvas = document.getElementById("canvas");
+  let ctx = canvas.getContext("2d");
+  ctx.lineWidth = 0;
+  ctx.strokeStyle = 'black';
+  for (let y = 0; y < 3; ++y) {
+    for (let x = 0; x < 4; ++x) {
+      if (prev[x + y * 4] != state[x + y * 4]) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(x0 + x * 8 - 1, y0 + y * 15 - 1, 8, 15);
+      }
+      ctx.fillStyle = colors[state[x + y * 4]];
+      ctx.fillRect(x0 + x * 8, y0 + y * 15, 6, 13);
+    }
+  }
+}
+
+function swap(arr, first, last){
+    var temp = arr[first];    
+    arr[first] = arr[last];
+    arr[last] = temp;
+}
+
+function neighbors(state) {
+  let res = [];
+  for (let y = 0; y < 3; ++y) {
+    for (let x = 0; x < 3; ++x) {
+      let p = x + y * 4;
+      let ar = state.split('');
+      swap(ar, p, p + 1);
+      res.push(ar.join(''));
+    }
+  }
+  for (let y = 0; y < 2; ++y) {
+    for (let x = 0; x < 4; ++x) {
+      let p = x + y * 4;
+      let ar = state.split('');
+      swap(ar, p, p + 4);
+      res.push(ar.join(''));
+    }
+  }
+  return res;
+}
+
+function good(state) {
+  if (state[0] != state[4]) return false;
+  if (state[1] != state[5]) return false;
+  if (state[2] != state[6]) return false;
+  if (state[3] != state[7]) return false;
+  if (state[4] != state[8]) return false;
+  if (state[5] != state[9]) return false;
+  if (state[6] != state[10]) return false;
+  if (state[7] != state[11]) return false;
+  return true;
+}
+
+function bfs(start) {
+  let dist = {};
+  let prev = {};
+  let que = [];
+  let solutions = [];
+  let good_dist = 10000;
+  dist[start] = 0;
+  que.push(start);
+  if (good(start)) {
+    return {
+      'dist': 0,
+      'path': [start]
+    };
+  }
+  while (que.length) {
+    let cur = que.shift();
+    let new_dist = dist[cur] + 1;
+    if (new_dist > good_dist) {
+      let paths = [];
+      for (let solution of solutions) {
+        cur = solution;
+        let path = [cur];
+        while (cur != start) {
+          cur = prev[cur];
+          path.unshift(cur);
+        }
+        paths.push(path);
+      }
+      return {
+        'paths': paths,
+        'solutions': solutions,
+        'dist': good_dist
+      };
+    }
+    for (let nei of neighbors(cur)) {
+      if (!(nei in dist)) {
+        if (good(nei)) {
+          if (new_dist < good_dist) {
+            good_dist = new_dist;
+          }
+          solutions.push(nei);
+        }
+        dist[nei] = new_dist;
+        prev[nei] = cur;
+        que.push(nei);
+      }
+    }
+  }
+}
+
+function solve() {
+  let res = bfs(start);
+  console.log(res);
+
+  let x = 10;
+  let y = 10;
+  for (let path of res['paths']) {
+    let prev = start;
+    for (let state of path) {
+      drawStateCanvas(state, prev, x, y);
+      prev = state;
+      x += 40;
+    }
+    y += 50;
+    x = 10;
+  }
+  document.getElementById('console').innerHTML = 'in ' + res['dist'];
+}
+
+//let start = '202001233131';
+//let start = '123121203003';
+let start = '001022123133';
+console.log(start);
+drawStateCanvas(start, start, 10, 10);
+window.setTimeout(solve, 100);
+
+</script>

@@ -1,0 +1,27 @@
+From:
+<table id=state border=1 cellpadding=3 style='border-collapse: collapse;'>
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+</table>
+<br>To:
+
+<table id=state2 border=1 cellpadding=3 style='border-collapse: collapse;'>
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;
+</table>
+
+function drawState(state, id) {
+  var table = document.getElementById(id);
+  for (var i = 0, row; row = table.rows[i]; i++) {
+     for (var j = 0, td; td = row.cells[j]; j++) {
+       let col = state[j + i * 4];
+       td.style.backgroundColor = colors[col];
+     }  
+  }  
+}
+
+//drawState(state, 'state');
+//drawStateCanvas(start, 0, 0);
+//drawState(res['state'], 'state2');

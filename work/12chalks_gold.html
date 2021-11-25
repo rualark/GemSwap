@@ -1,0 +1,243 @@
+<p id=console>Searching for worst combination...</p>
+
+<canvas id=canvas width=1500 height=2000>
+
+<script>
+let colors = ['red', 'blue', '#aaaaaa', 'orange'];
+let dist = {};
+
+function drawStateCanvas(state, prev, x0, y0) {
+  let canvas = document.getElementById("canvas");
+  let ctx = canvas.getContext("2d");
+  ctx.lineWidth = 0;
+  ctx.strokeStyle = 'black';
+  for (let y = 0; y < 3; ++y) {
+    for (let x = 0; x < 4; ++x) {
+      if (prev[x + y * 4] != state[x + y * 4]) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(x0 + x * 8 - 1, y0 + y * 8 - 1, 8, 8);
+      }
+      ctx.fillStyle = colors[state[x + y * 4]];
+      ctx.fillRect(x0 + x * 8, y0 + y * 8, 6, 6);
+    }
+  }
+}
+
+function swap(arr, first, last){
+    var temp = arr[first];    
+    arr[first] = arr[last];
+    arr[last] = temp;
+}
+
+function neighbors(state) {
+  let res = [];
+  for (let y = 0; y < 3; ++y) {
+    for (let x = 0; x < 3; ++x) {
+      let p = x + y * 4;
+      let ar = state.split('');
+      swap(ar, p, p + 1);
+      res.push(ar.join(''));
+    }
+  }
+  for (let y = 0; y < 2; ++y) {
+    for (let x = 0; x < 4; ++x) {
+      let p = x + y * 4;
+      let ar = state.split('');
+      swap(ar, p, p + 4);
+      res.push(ar.join(''));
+    }
+  }
+  return res;
+}
+
+function good(state) {
+  if (state[0] != state[4]) return false;
+  if (state[1] != state[5]) return false;
+  if (state[2] != state[6]) return false;
+  if (state[3] != state[7]) return false;
+  if (state[4] != state[8]) return false;
+  if (state[5] != state[9]) return false;
+  if (state[6] != state[10]) return false;
+  if (state[7] != state[11]) return false;
+  return true;
+}
+
+function bfs(start) {
+  let dist = {};
+  let prev = {};
+  let que = [];
+  let solutions = [];
+  let good_dist = 10000;
+  dist[start] = 0;
+  que.push(start);
+  if (good(start)) {
+    return {
+      'dist': 0,
+      'path': [start]
+    };
+  }
+  while (que.length) {
+    let cur = que.shift();
+    let new_dist = dist[cur] + 1;
+    if (new_dist > good_dist) {
+      let paths = [];
+      for (let solution of solutions) {
+        cur = solution;
+        let path = [cur];
+        while (cur != start) {
+          cur = prev[cur];
+          path.unshift(cur);
+        }
+        paths.push(path);
+      }
+      return {
+        'paths': paths,
+        'solutions': solutions,
+        'dist': good_dist
+      };
+    }
+    for (let nei of neighbors(cur)) {
+      if (!(nei in dist)) {
+        if (good(nei)) {
+          if (new_dist < good_dist) {
+            good_dist = new_dist;
+          }
+          solutions.push(nei);
+        }
+        dist[nei] = new_dist;
+        prev[nei] = cur;
+        que.push(nei);
+      }
+    }
+  }
+}
+
+function nextPermutation(N) {
+  const swap = (i, j) =>
+    [N[i],N[j]] = [N[j],N[i]]
+
+  let len = N.length - 1, i
+  for (i = len - 1; N[i] >= N[i+1];) i--
+  let j = i + 1, k = len
+  while (j < k) swap(j++,k--)
+  if (i >= 0) {
+    for (j = i + 1; N[i] >= N[j];) j++
+    swap(i,j)
+  }
+}
+
+function goods() {
+  let ar = [0, 1, 2, 3];
+  let res = [ar.join('') + ar.join('') + ar.join('')];
+  for (let i = 0; i < 23; ++i) {
+    nextPermutation(ar);
+    res.push(ar.join('') + ar.join('') + ar.join(''));
+  }
+  return res;
+}
+
+function bfs_back() {
+  let dist = {};
+  let prev = {};
+  let que = [];
+  let cur;
+  let new_dist;
+  let max_dist = 0;
+  let worst = [];
+  let source = {};
+  for (let start of goods()) {
+    dist[start] = 0;
+    source[start] = 1 << que.length;
+    que.push(start);
+  }
+  while (que.length) {
+    cur = que.shift();
+    new_dist = dist[cur] + 1;
+    for (let nei of neighbors(cur)) {
+      if (!(nei in dist)) {
+        if (max_dist > new_dist) {
+          max_dist = new_dist;
+        }
+        if (new_dist == 11) {
+          worst.push(nei);
+        }
+        dist[nei] = new_dist;
+        prev[nei] = cur;
+        source[nei] = source[cur];
+        que.push(nei);
+      } else {
+        if (dist[nei] == new_dist) {
+          source[nei] = source[nei] | source[cur];
+        }
+      }
+    }
+  }
+  document.getElementById('console').innerHTML = 'Found worst combinations: ' + worst.length + ' of ' + Object.keys(dist).length;
+  let max_goldness = 0;
+  let gold = [];
+  for (let state of worst) {
+    let goldness = bitCount(source[state]);
+    if (goldness > max_goldness) {
+      gold = [];
+      max_goldness = goldness;
+    }
+    if (goldness == max_goldness) {
+      gold.push(state);
+    }
+  }
+  console.log('Gold', max_goldness, gold);
+  return gold;
+  /*
+  let path = [cur];
+  while (!good(cur)) {
+    cur = prev[cur];
+    path.push(cur);
+  }
+  return {
+    'path': path,
+    'dist': max_dist
+  };
+  */
+}
+
+function bitCount(i) {
+  return Number(i.toString(2).split("").sort().join("")).toString().length;
+}
+
+function solve() {
+  let res = bfs_back();
+  console.log('Res', res);
+
+  for (let i = 0; i < res.length; ++i) {
+    let x = (i % 6) * 40;
+    let y = Math.floor(i / 6) * 32;
+    drawStateCanvas(res[i], res[i], x, y);
+  }
+  window.setTimeout(() => {
+    check(res[Math.floor(Math.random() * res.length)])
+  }, 100);
+}
+
+function check(start) {
+  let res = bfs(start);
+  console.log(res);
+
+  let x = 10;
+  let y = 700;
+  for (let path of res['paths']) {
+    let prev = start;
+    for (let state of path) {
+      drawStateCanvas(state, prev, x, y);
+      prev = state;
+      x += 40;
+    }
+    y += 32;
+    x = 10;
+  }
+  document.getElementById('console').innerHTML += '. Solved in ' + res['dist'];
+}
+
+console.log('Start', goods());
+window.setTimeout(solve, 100);
+
+</script>
