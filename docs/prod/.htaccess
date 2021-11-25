@@ -1,0 +1,2 @@
+# <filesMatch "\.(html|htm|js|css|png|php|jpg|xml|plain|wasm)$">
+DirectoryIndex index.html index.htm index.php
